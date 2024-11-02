@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monokko Agent Log Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .log-entry {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff;
+        }
+        .timestamp {
+            font-size: 0.9em;
+            color: #888;
+        }
+        .speaker {
+            font-weight: bold;
+            color: #333;
+        }
+        .response {
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Monokko Agent Log</h1>
+    <div id="log-container"></div>
+
+    <script>
+        // Function to fetch and display log data
+        async function fetchAgentLog() {
+            try {
+                const response = await fetch('https://api.monokko.com/agent_log');
+                const data = await response.json();
+
+                const logContainer = document.getElementById('log-container');
+                logContainer.innerHTML = '';
+
+                // Reverse the data array to show the latest comments first
+                data.reverse().forEach(entry => {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+
+                    const timestamp = document.createElement('div');
+                    timestamp.className = 'timestamp';
+                    timestamp.textContent = `Timestamp: ${new Date(entry.timestamp).toLocaleString()}`;
+
+                    const speaker = document.createElement('div');
+                    speaker.className = 'speaker';
+                    speaker.textContent = `Speaker: ${entry.response.speaker}`;
+
+                    const responseText = document.createElement('div');
+                    responseText.className = 'response';
+                    responseText.textContent = `Response: ${entry.response.response}`;
+
+                    logEntry.appendChild(timestamp);
+                    logEntry.appendChild(speaker);
+                    logEntry.appendChild(responseText);
+
+                    logContainer.appendChild(logEntry);
+                });
+            } catch (error) {
+                console.error('Error fetching agent log:', error);
+            }
+        }
+
+        // Fetch log data on page load
+        window.onload = fetchAgentLog;
+    </script>
+</body>
+</html>

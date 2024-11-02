@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モノッコと話す＆ログビューアー</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #cce7ff, #b5d8ff);
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .main-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .container {
+            width: 45%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 15px;
+            background-color: #ffffff;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .left-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .left-container h2 {
+            text-align: center;
+            color: #5b6bc4;
+            margin-bottom: 15px;
+        }
+
+        .left-container p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background-color: #5b6bc4;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #4a5aa1;
+        }
+
+        .response-output {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #444;
+            text-align: center;
+        }
+
+        .log-entry {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fafafa;
+        }
+
+        .timestamp {
+            font-size: 0.9em;
+            color: #888;
+        }
+
+        .speaker {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .response {
+            margin-top: 5px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #5b6bc4;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="container left-container">
+            <h2>モノッコと話す</h2>
+            <p><i>お金が溶けるので一人３回まで（泣）</i></p>
+            <p>モノッコn号 n={1,2,3,4,5}をつけると指定のモノッコと会話できるよ</p>
+            <p><strong>例:</strong> モノッコ2号今何してるの？</p>
+            <p><strong>例:</strong> モノッコ5号なにに取り憑いている？</p>
+            
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="メッセージを入力">
+            </div>
+            <button onclick="sendRequest()">送信</button>
+            <div class="response-output" id="responseOutput"></div>
+        </div>
+
+        <div class="container right-container">
+            <h1>モノッコログ</h1>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // Function to send a request to the Monokko API
+        function sendRequest() {
+            const userInput = document.getElementById("userInput").value;
+            const responseOutput = document.getElementById("responseOutput");
+
+            responseOutput.innerText = "待機中...";
+
+            const data = {
+                message: userInput,
+                debug: false,
+                log: true
+            };
+
+            fetch('https://api.monokko.com/agent_response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(`Error: ${response.status} ${response.statusText}`);
+                }
+            })
+            .then(data => {
+                const speaker = data.speaker;
+                const responseMessage = data.response;
+                responseOutput.innerText = `${speaker}: ${responseMessage}`;
+            })
+            .catch(error => {
+                responseOutput.innerText = `Error: ${error.message}`;
+            });
+        }
+
+        // Function to fetch and display log data
+        async function fetchAgentLog() {
+            try {
+                const response = await fetch('https://api.monokko.com/agent_log');
+                const data = await response.json();
+
+                const logContainer = document.getElementById('log-container');
+                logContainer.innerHTML = '';
+
+                // Reverse the data array and display only the latest 5 comments
+                data.slice(-5).reverse().forEach(entry => {
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'log-entry';
+
+                    const timestamp = document.createElement('div');
+                    timestamp.className = 'timestamp';
+                    timestamp.textContent = `Timestamp: ${new Date(entry.timestamp).toLocaleString()}`;
+
+                    const speaker = document.createElement('div');
+                    speaker.className = 'speaker';
+                    speaker.textContent = `Speaker: ${entry.response.speaker}`;
+
+                    const responseText = document.createElement('div');
+                    responseText.className = 'response';
+                    responseText.textContent = `Response: ${entry.response.response}`;
+
+                    logEntry.appendChild(timestamp);
+                    logEntry.appendChild(speaker);
+                    logEntry.appendChild(responseText);
+
+                    logContainer.appendChild(logEntry);
+                });
+            } catch (error) {
+                console.error('Error fetching agent log:', error);
+            }
+        }
+
+        // Fetch log data on page load and every 2 seconds
+        window.onload = function() {
+            fetchAgentLog();
+            setInterval(fetchAgentLog, 2000);
+        };
+    </script>
+</body>
+</html>
