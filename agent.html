@@ -106,17 +106,15 @@
             const userInput = document.getElementById("userInput").value;
             const responseOutput = document.getElementById("responseOutput");
 
-            // 「待機中」のメッセージを表示
             responseOutput.innerText = "待機中...";
 
-            // リクエストデータを構築
+     
             const data = {
                 message: userInput,
                 debug: false,
                 log: true
             };
 
-            // リクエストを送信
             fetch('https://api.monokko.com/agent_response', {
                 method: 'POST',
                 headers: {
@@ -132,13 +130,12 @@
                 }
             })
             .then(data => {
-                // ローディングメッセージを消してレスポンスを表示
                 const speaker = data.speaker;
                 const responseMessage = data.response;
                 responseOutput.innerText = `${speaker}: ${responseMessage}`;
             })
             .catch(error => {
-                // エラーメッセージを表示
+                
                 responseOutput.innerText = `Error: ${error.message}`;
             });
         }
