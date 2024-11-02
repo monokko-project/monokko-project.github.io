@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モノッコと話す</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f8ff;
+            margin: 0;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 600px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        h2 {
+            text-align: center;
+            color: #5b6bc4;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            margin-top: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            max-width: 550px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #5b6bc4;
+            color: #ffffff;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 550px;
+        }
+
+        button:hover {
+            background-color: #4a5aa1;
+        }
+
+        .response-output {
+            margin-top: 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #444;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>モノッコと話す</h2>
+        <p><i>お金が溶けるので一人３回まで（泣）</i></p>
+        <p>モノッコn号 n={1,2,3,4,5}をつけると指定のモノッコと会話できるよ</p>
+        <p><strong>例:</strong> モノッコ2号今何してるの？</p>
+        <p><strong>例:</strong> モノッコ5号なにに取り憑いている？</p>
+        
+        <div class="input-group">
+            <input type="text" id="userInput" placeholder="メッセージを入力">
+        </div>
+        <button onclick="sendRequest()">送信</button>
+        <div class="response-output" id="responseOutput"></div>
+    </div>
+
+    <script>
+        function sendRequest() {
+            const userInput = document.getElementById("userInput").value;
+            const responseOutput = document.getElementById("responseOutput");
+
+            // 「待機中」のメッセージを表示
+            responseOutput.innerText = "待機中...";
+
+            // リクエストデータを構築
+            const data = {
+                message: userInput,
+                debug: false,
+                log: true
+            };
+
+            // リクエストを送信
+            fetch('https://api.monokko.com/agent_response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(`Error: ${response.status} ${response.statusText}`);
+                }
+            })
+            .then(data => {
+                // ローディングメッセージを消してレスポンスを表示
+                const speaker = data.speaker;
+                const responseMessage = data.response;
+                responseOutput.innerText = `${speaker}: ${responseMessage}`;
+            })
+            .catch(error => {
+                // エラーメッセージを表示
+                responseOutput.innerText = `Error: ${error.message}`;
+            });
+        }
+    </script>
+</body>
+</html>
