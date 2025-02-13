@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monokko Config Editor</title>
+  <style>
+    /* ベーシックで洗練されたデザイン */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .form-group input[type="range"] {
+      width: 80%;
+    }
+    .range-output {
+      display: inline-block;
+      width: 50px;
+      text-align: center;
+    }
+    fieldset {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    fieldset legend {
+      font-weight: bold;
+      color: #444;
+    }
+    .button-group {
+      text-align: center;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button.reset {
+      background-color: #dc3545;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    .message {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #28a745;
+    }
+  </style>
+  <script>
+    // 初期の Monokko データ（全項目は初期化値）
+    let monokkoData = {
+      id: 4,  // ID 入力欄を用意
+      name: "",
+      active: 0,
+      in_screen: 0,
+      personality: [],
+      condition: 0,
+      emotion: {
+        anger: 0,
+        fear: 0,
+        happiness: 0,
+        sadness: 0,
+        surprise: 0
+      },
+      current_emotion: "",
+      current_object: "",
+      cubudoh_state: 0,
+      important_memories: [],
+      visible: 0,
+      appearance: ""
+    };
+
+    // 各フォーム項目を初期値にリセット
+    function resetForm() {
+      document.getElementById("id").value = 4;
+      document.getElementById("name").value = "";
+      document.getElementById("active").value = 0;
+      document.getElementById("in_screen").value = 0;
+      document.getElementById("personality").value = "[]";
+      document.getElementById("condition").value = 0;
+      document.getElementById("anger").value = 0;
+      document.getElementById("fear").value = 0;
+      document.getElementById("happiness").value = 0;
+      document.getElementById("sadness").value = 0;
+      document.getElementById("surprise").value = 0;
+      // スライダー用の出力表示も更新
+      document.getElementById("angerVal").textContent = "0";
+      document.getElementById("fearVal").textContent = "0";
+      document.getElementById("happinessVal").textContent = "0";
+      document.getElementById("sadnessVal").textContent = "0";
+      document.getElementById("surpriseVal").textContent = "0";
+      document.getElementById("current_emotion").value = "";
+      document.getElementById("current_object").value = "";
+      document.getElementById("cubudoh_state").value = 0;
+      document.getElementById("important_memories").value = "[]";
+      document.getElementById("visible").value = 0;
+      document.getElementById("appearance").value = "";
+      document.getElementById("message").textContent = "";
+    }
+
+    // 入力内容を monokkoData に反映する（型チェック付き）
+    function updateData() {
+      monokkoData.id = Number(document.getElementById("id").value);
+      monokkoData.name = document.getElementById("name").value;
+      monokkoData.active = Number(document.getElementById("active").value);
+      monokkoData.in_screen = Number(document.getElementById("in_screen").value);
+      
+      try {
+        monokkoData.personality = JSON.parse(document.getElementById("personality").value);
+        if (!Array.isArray(monokkoData.personality)) throw new Error();
+      } catch(e) {
+        alert("『personality』には有効な JSON 配列を入力してください。");
+        return false;
+      }
+      
+      monokkoData.condition = Number(document.getElementById("condition").value);
+      monokkoData.emotion.anger = Number(document.getElementById("anger").value);
+      monokkoData.emotion.fear = Number(document.getElementById("fear").value);
+      monokkoData.emotion.happiness = Number(document.getElementById("happiness").value);
+      monokkoData.emotion.sadness = Number(document.getElementById("sadness").value);
+      monokkoData.emotion.surprise = Number(document.getElementById("surprise").value);
+      
+      monokkoData.current_emotion = document.getElementById("current_emotion").value;
+      monokkoData.current_object = document.getElementById("current_object").value;
+      monokkoData.cubudoh_state = Number(document.getElementById("cubudoh_state").value);
+      
+      try {
+        monokkoData.important_memories = JSON.parse(document.getElementById("important_memories").value);
+        if (!Array.isArray(monokkoData.important_memories)) throw new Error();
+      } catch(e) {
+        alert("『important_memories』には有効な JSON 配列を入力してください。");
+        return false;
+      }
+      
+      monokkoData.visible = Number(document.getElementById("visible").value);
+      monokkoData.appearance = document.getElementById("appearance").value;
+      return true;
+    }
+
+    // 各 emotion のスライダー値が変動した際に表示を更新
+    function updateRangeValue(id, outputId) {
+      const val = document.getElementById(id).value;
+      document.getElementById(outputId).textContent = val;
+    }
+
+    // 各項目ごとに送信（POST リクエスト）する処理
+    async function sendData() {
+      if (!updateData()) return;
+      let results = {};
+      // monokkoData の各キー（id を除く）について個別に送信
+      for (let key in monokkoData) {
+        if (key !== "id") {
+          let payload = {
+            id: monokkoData.id,
+            [key]: monokkoData[key]
+          };
+          try {
+            let response = await fetch("https://api.monokko.com/set_monokko_config", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`HTTPエラー: ${response.status}`);
+            results[key] = "成功";
+          } catch (error) {
+            results[key] = "失敗: " + error.message;
+          }
+        }
+      }
+      console.log("送信結果:", results);
+      document.getElementById("message").textContent = "送信結果: " + JSON.stringify(results);
+      alert("全項目の送信が完了しました！");
+    }
+
+    window.onload = function() {
+      resetForm();
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Monokko Config Editor</h1>
+    <form id="configForm">
+      <!-- ID の入力欄 -->
+      <div class="form-group">
+        <label for="id">ID (数値):</label>
+        <input type="number" id="id" placeholder="例: 4">
+      </div>
+      <!-- 名前 -->
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" placeholder="例: カップン">
+      </div>
+      <!-- active, in_screen -->
+      <div class="form-group">
+        <label for="active">Active (数値):</label>
+        <input type="number" id="active" placeholder="例: 1">
+      </div>
+      <div class="form-group">
+        <label for="in_screen">In Screen (数値):</label>
+        <input type="number" id="in_screen" placeholder="例: 1">
+      </div>
+      <!-- personality -->
+      <div class="form-group">
+        <label for="personality">Personality (JSON 配列):</label>
+        <textarea id="personality" rows="3" placeholder='例: ["明るい", "元気"]'>[]</textarea>
+      </div>
+      <!-- condition -->
+      <div class="form-group">
+        <label for="condition">Condition (数値):</label>
+        <input type="number" id="condition" placeholder="例: 0">
+      </div>
+      <!-- Emotion: スライダーで入力 -->
+      <fieldset>
+        <legend>Emotion (0～10 のスライダー)</legend>
+        <div class="form-group">
+          <label for="anger">Anger: <span id="angerVal">0</span></label>
+          <input type="range" id="anger" min="0" max="10" step="0.1" value="0" oninput="updateRangeValue('anger','angerVal')">
+        </div>
+        <div class="form-group">
+          <label for="fear">Fear: <span id="fearVal">0</span></label>
+          <input type="range" id="fear" min="0" max="10" step="0.1" value="0" oninput="updateRangeValue('fear','fearVal')">
+        </div>
+        <div class="form-group">
+          <label for="happiness">Happiness: <span id="happinessVal">0</span></label>
+          <input type="range" id="happiness" min="0" max="10" step="0.1" value="0" oninput="updateRangeValue('happiness','happinessVal')">
+        </div>
+        <div class="form-group">
+          <label for="sadness">Sadness: <span id="sadnessVal">0</span></label>
+          <input type="range" id="sadness" min="0" max="10" step="0.1" value="0" oninput="updateRangeValue('sadness','sadnessVal')">
+        </div>
+        <div class="form-group">
+          <label for="surprise">Surprise: <span id="surpriseVal">0</span></label>
+          <input type="range" id="surprise" min="0" max="10" step="0.1" value="0" oninput="updateRangeValue('surprise','surpriseVal')">
+        </div>
+      </fieldset>
+      <!-- current_emotion, current_object -->
+      <div class="form-group">
+        <label for="current_emotion">Current Emotion:</label>
+        <input type="text" id="current_emotion" placeholder="例: 楽しい">
+      </div>
+      <div class="form-group">
+        <label for="current_object">Current Object:</label>
+        <input type="text" id="current_object" placeholder="例: コップ">
+      </div>
+      <!-- cubudoh_state -->
+      <div class="form-group">
+        <label for="cubudoh_state">Cubudoh State (数値):</label>
+        <input type="number" id="cubudoh_state" placeholder="例: 0">
+      </div>
+      <!-- important_memories -->
+      <div class="form-group">
+        <label for="important_memories">Important Memories (JSON 配列):</label>
+        <textarea id="important_memories" rows="3" placeholder='例: ["記憶1", "記憶2"]'>[]</textarea>
+      </div>
+      <!-- visible -->
+      <div class="form-group">
+        <label for="visible">Visible (数値):</label>
+        <input type="number" id="visible" placeholder="例: 0">
+      </div>
+      <!-- appearance -->
+      <div class="form-group">
+        <label for="appearance">Appearance:</label>
+        <input type="text" id="appearance" placeholder="例: シンプルなデザイン">
+      </div>
+    </form>
+    <div class="button-group">
+      <button type="button" class="reset" onclick="resetForm()">Reset Data</button>
+      <button type="button" onclick="sendData()">Send Data</button>
+    </div>
+    <div id="message" class="message"></div>
+  </div>
+</body>
+</html>
